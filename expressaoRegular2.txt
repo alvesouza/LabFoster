@@ -1,0 +1,91 @@
+Etapa 0:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 1 [ label = "a*b+b*a" ];
+	}
+
+//////////////////////////////////////////////
+
+Etapa 1:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 1 [ label = "a*b" ];
+	0 -> 1 [ label = "b*a" ];
+	}
+
+//////////////////////////////////////////////
+
+Etapa 2:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 2 [ label = "a*" ];
+	0 -> 1 [ label = "b*a" ];
+	2 -> 1 [ label = "b" ];
+}
+
+//////////////////////////////////////////////
+
+Etapa 3:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 3 [ label = "&" ];
+	0 -> 1 [ label = "b*a" ];
+	2 -> 1 [ label = "b" ];
+	3 -> 2 [ label = "&" ];
+	3 -> 3 [ label = "a" ];
+}
+
+//////////////////////////////////////////////
+
+Etapa 4:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 3 [ label = "&" ];
+	0 -> 4 [ label = "b*" ];
+	2 -> 1 [ label = "b" ];
+	3 -> 2 [ label = "&" ];
+	3 -> 3 [ label = "a" ];
+	4 -> 1 [ label = "a" ];
+}
+
+//////////////////////////////////////////////
+
+Etapa 5:
+
+digraph finite_state_machine {
+	rankdir=LR;
+	size="8,5"
+	node [shape = doublecircle]; 1
+	node [shape = circle];
+	0 -> 3 [ label = "&" ];
+	0 -> 5 [ label = "&" ];
+	2 -> 1 [ label = "b" ];
+	3 -> 2 [ label = "&" ];
+	3 -> 3 [ label = "a" ];
+	4 -> 1 [ label = "a" ];
+	5 -> 4 [ label = "&" ];
+	5 -> 5 [ label = "b" ];
+}
+
+//////////////////////////////////////////////
+
