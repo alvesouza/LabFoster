@@ -131,12 +131,37 @@ class Graph{
         {
             std::string regularExpression = "";
             std::string fileName = "geracaodeExpressaoRegular";
+            estado aux;
+            int n = 0;
             etapa = 0;
             bool changed = true;
             fileName.append(std::to_string(questionNumber));
             fileName.append(".txt");
             myFile.open(fileName);
+            aux.valida = false;
             printGraphInTXT();
+            aux.number = "Begin";
+            aux.transicoes.resize(1);
+            aux.transicoes[0] = {0,1,"&"};
+            estados.insert(estados.begin()+0,aux);
+            n = estados.size();
+            for(int i = 1; i<n; i++)
+                for(int j = 0, m = estados[i].transicoes.size(); j < m; j++)
+                {
+                    estados[i].transicoes[j].dest++;
+                    estados[i].transicoes[j].src++;
+                }
+
+            printGraphInTXT();
+
+            estados[2].transicoes.push_back({2,n,"&"});
+            aux.valida = true;
+            aux.number = "End";
+            aux.transicoes.resize(0);
+            estados.push_back(aux);
+            printGraphInTXT();
+
+
 
             while(changed)
             {
@@ -158,7 +183,11 @@ class Graph{
         {
             for(int i = 0,n = estados.size();i<n;i++)
                 for(int j = 0, m = estados[i].transicoes.size();j < m; j++)
-                    if(estados[i].transicoes[j].dest > posEstado)estados[i].transicoes[j].dest--;
+                    if(estados[i].transicoes[j].dest > posEstado)
+                    {
+                        estados[i].transicoes[j].dest--;
+                        estados[i].transicoes[j].src--;
+                    }
             estados.erase(estados.begin()+posEstado);
                 
         }
@@ -531,7 +560,7 @@ class Graph{
 
                         }
                     }
-                    else if(apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 1&&estados[estados[src].transicoes[i].dest].transicoes[0].regExp!="&")
+                    else if(apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 1)
                     {
                         regExp01 = estados[src].transicoes[i].regExp;
 
@@ -539,10 +568,13 @@ class Graph{
 
                         
                         if(regExp01 == "&")regExp01 = "";
-                        if(regExp02 == "&")regExp02 = "";
-
-                        fechaRegularExpression(regExp01);
-                        fechaRegularExpression(regExp02);
+                        else if(regExp02 == "&")regExp02 = "";
+                        
+                        if(regExp01.size()>0&&regExp02.size()>0)
+                        {
+                            fechaRegularExpression(regExp01);
+                            fechaRegularExpression(regExp02);
+                        }
                         
                         //if(regExp01 == "&")regExp01 = "";
                         //if(regExp02 == "&")regExp02 = "";
