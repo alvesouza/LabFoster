@@ -627,7 +627,13 @@ int main(){
     }
     
     std::cout << "\n\n\nQuetao04\n" ;
-        
+    automatos.resize(5);
+    
+    automatos[4].createGraph("(a+b)*bb(b+a)*", 4); 
+    automatos[4].estados[0].transicoes.push_back({0,0,"a"});
+    
+    automatos[4].estados[1].transicoes.push_back({1,1,"b"});
+    automatos[4].estados[1].transicoes.push_back({1,1,"a"});
     for(int j = 0,m = automatos.size(); j<m; j++)
     {
         std::cout << "automato["<< j <<"].regularExp = " << automatos[j].geraRegExp() << std::endl;
