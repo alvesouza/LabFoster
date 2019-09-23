@@ -505,8 +505,9 @@ class Graph{
                             if(regExp03 == "&")regExp03 = "";
                             
                             //fecha o regExp02
+                            parentesesEsq = 0;
                             if(regExp02[0] == '(')parentesesEsq++;
-                            for(int posString = 0,sizeStr = regExp02.size()-1;posString<sizeStr;posString++)
+                            for(int posString = 1,sizeStr = regExp02.size()-1;posString<sizeStr&&parentesesEsq>0;posString++)
                                 if(regExp02[posString] == '(')parentesesEsq++;
                                 else if(regExp02[posString] == ')')parentesesEsq--;
                             if(parentesesEsq == 0&&regExp02.size()>1)
