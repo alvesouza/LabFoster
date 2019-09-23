@@ -385,6 +385,6 @@ int main(){
     }
 
     std::cout << "Finalizado" << std::endl;
-    std::cin >> i;
+    std::cin.get();
     return 0;
 }
