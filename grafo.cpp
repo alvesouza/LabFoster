@@ -531,11 +531,15 @@ class Graph{
 
                         }
                     }
-                    else if(estados[src].transicoes[i].regExp != "&"&&apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 1&&estados[estados[src].transicoes[i].dest].transicoes[0].regExp!="&")
+                    else if(apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 1&&estados[estados[src].transicoes[i].dest].transicoes[0].regExp!="&")
                     {
                         regExp01 = estados[src].transicoes[i].regExp;
 
                         regExp02 = estados[estados[src].transicoes[i].dest].transicoes[0].regExp;
+
+                        
+                        if(regExp01 == "&")regExp01 = "";
+                        if(regExp02 == "&")regExp02 = "";
 
                         fechaRegularExpression(regExp01);
                         fechaRegularExpression(regExp02);
