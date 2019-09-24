@@ -9,6 +9,7 @@ struct transicao{
 };
 struct estado{
     bool valida;//se true o estado valida a cadeia
+    std::string number;//numero do estado
     std::vector<transicao> transicoes;
 };
 
@@ -36,7 +37,8 @@ class Graph{
 
             //cria e abre o arquivo txt, precisei fazer assim e não dentro da função em sí, pois quero saber todos os processos de mudança
             std::string fileName = "expressaoRegular";
-            fileName.append(std::to_string(questNumber));
+            questionNumber = questNumber;
+            fileName.append(std::to_string(questionNumber));
             fileName.append(".txt");
             myFile.open(fileName);
 
@@ -51,9 +53,11 @@ class Graph{
             trans.regExp = regExp;
             aux.transicoes.push_back(trans);//estado 0
             aux.valida = false;
+            aux.number = std::to_string(0);
             estados.push_back(aux);//adciona estado 0
             aux.transicoes.resize(0);
             aux.valida = true;
+            aux.number = std::to_string(1);;
             estados.push_back(aux);//adciona estado 1
             
             //printa o automato inicial
@@ -79,14 +83,15 @@ class Graph{
             for(int i = 0;i < numberStates;i++)
             {
                 if(estados[i].valida)
-                    myFile << " " << i;
+                    myFile << " " << estados[i].number;
             }
             myFile << "\n\tnode [shape = circle];\n\t";
             for(int i = 0;i < numberStates;i++)
             {
                 for(int j = 0, m = estados[i].transicoes.size(); j<m; j++)
                     {
-                        myFile << i <<" -> " << estados[i].transicoes[j].dest << " [ label = \"" << estados[i].transicoes[j].regExp <<"\" ];\n";
+                        myFile << estados[i].number <<" -> " << estados[estados[i].transicoes[j].dest].number
+                             << " [ label = \"" << estados[i].transicoes[j].regExp <<"\" ];\n";
                         if(!(i+1 == numberStates)||!(j+1 == m))
                             myFile <<"\t";
                     }
@@ -107,7 +112,7 @@ class Graph{
             //imprimi os estados possiveis e verifica se é valida
             for(int i = 0,n = possiveisEstados.size();i<n;i++)
             {
-                std::cout << "estado: "<< possiveisEstados[i];
+                std::cout << "estado: "<< estados[possiveisEstados[i]].number;
                 
                 //escreve se esse estado valida ou não a cadeia
                 if(estados[possiveisEstados[i]].valida)
@@ -257,10 +262,71 @@ class Graph{
         }
 
 
+        //Retorna a expressão regular equivalente e retorna à etapa 0 da questão 01
+        std::string geraRegExp()
+        {
+            std::string regularExpression = "";
+            std::string fileName = "geracaodeExpressaoRegular";
+            estado aux;
+            int n = 0;
+            etapa = 0;
+            bool changed = true;
+            fileName.append(std::to_string(questionNumber));
+            fileName.append(".txt");
+            myFile.open(fileName);
+            aux.valida = false;
+            printGraphInTXT();
+            aux.number = "Begin";
+            aux.transicoes.resize(1);
+            aux.transicoes[0] = {0,1,"&"};
+            estados.insert(estados.begin()+0,aux);
+            n = estados.size();
+            for(int i = 1; i<n; i++)
+                for(int j = 0, m = estados[i].transicoes.size(); j < m; j++)
+                {
+                    estados[i].transicoes[j].dest++;
+                    estados[i].transicoes[j].src++;
+                }
+
+            printGraphInTXT();
+
+            estados[2].transicoes.push_back({2,n,"&"});
+            aux.valida = true;
+            aux.number = "End";
+            aux.transicoes.resize(0);
+            estados.push_back(aux);
+            printGraphInTXT();
+
+
+
+            while(changed)
+            {
+                changed = passaPorAutomatoRegExp(0);
+            }
+
+            //printGraphInTXT();
+            myFile.close();
+            return estados[0].transicoes[0].regExp;
+        }
+
     private:
         std::ofstream myFile;
         std::string fileName;
+        int questionNumber;
         int etapa;
+
+        void eliminaEstado(int posEstado)
+        {
+            for(int i = 0,n = estados.size();i<n;i++)
+                for(int j = 0, m = estados[i].transicoes.size();j < m; j++)
+                    if(estados[i].transicoes[j].dest > posEstado)
+                    {
+                        estados[i].transicoes[j].dest--;
+                        estados[i].transicoes[j].src--;
+                    }
+            estados.erase(estados.begin()+posEstado);
+                
+        }
 
         //passa pelo automato e a cadeia, adcionando os valores de possiveiEstados
         void passaPorAutomato(std::vector<int> &possiveisEstados, std::string &cadeia, int estadoAtual, int posCadeia)
@@ -386,6 +452,7 @@ class Graph{
                         //adciona o a transição ao novo estado
                         newEstado.transicoes.push_back(aux);
                         newEstado.valida = false;
+                        newEstado.number = std::to_string(n);
 
                         //adciona o novo estado
                         estados.push_back(newEstado);
@@ -436,6 +503,7 @@ class Graph{
                         aux.dest = n;
                         aux.regExp = splited1;
                         newEstado.transicoes.push_back(aux);
+                        newEstado.number = std::to_string(n);
 
                         //cria novo estado
                         estados.push_back(newEstado);
@@ -492,6 +560,180 @@ class Graph{
 
             return changed;
         }
+        bool passaPorAutomatoRegExp(int src)
+        {
+            bool changed = true;
+            if(src >= estados.size() || estados[src].transicoes.size() == 0)return false;
+
+            changed = padrao01(src);
+            changed = changed||padrao02(src);
+            
+
+            return changed;
+        }
+        bool padrao01(int src)
+        {
+            std::vector<std::string> trans;
+            transicao auxTrans;
+            //std::string plus = "+";
+            bool changed = false;
+            int n = estados[src].transicoes.size(),transicoes_finais;
+            trans.resize(estados.size());
+            for(int i = 0;i < n; i++)
+            {
+                if(trans[estados[src].transicoes[i].dest].size() > 0)trans[estados[src].transicoes[i].dest].append("+" + estados[src].transicoes[i].regExp);
+                else trans[estados[src].transicoes[i].dest].append(estados[src].transicoes[i].regExp);
+            }
+            
+            estados[src].transicoes.resize(0);
+
+            for(int i = 0,m = trans.size();i < m; i++)
+            {
+                if(trans[i].size() != 0)
+                {
+                    auxTrans.src = src;
+                    auxTrans.dest = i;
+                    auxTrans.regExp = trans[i];
+                    estados[src].transicoes.push_back(auxTrans);
+                }
+            }
+
+            changed = (n != estados[src].transicoes.size());
+
+            if(changed)printGraphInTXT();
+
+            return changed;
+        }
+        void fechaRegularExpression(std::string &regExp)
+        {
+            int numeroDeMais = 0, parenteseEsq = 0;
+            for(int i = 0,n = regExp.size();i < n; i++)
+            {
+                if(regExp[i] == '(')parenteseEsq++;
+                else if(regExp[i] == ')')parenteseEsq--;
+                else if(regExp[i] == '+')
+                {
+                    if(parenteseEsq == 0)
+                    {
+                        regExp.insert(0, "(");
+                        regExp.append(")");
+                        i = n;
+                    }
+                }
+
+            }
+
+        }
+        bool padrao02(int src)
+        {
+            bool changed = false;
+            bool changedInFunction = false;
+            int apontamPara = 0;
+            int estadoApontaPara;
+            int estadoParaEliminar = 0;
+            int parentesesEsq = 0;
+            std::string regExp01,regExp02,regExp03;
+            for(int i = 0, n = estados[src].transicoes.size();i < n && !changed; i++)
+            {
+                apontamPara = 0;
+                if(estados[estados[src].transicoes[i].dest].transicoes.size() < 3)
+                {
+                    for(int nestado = 0,numEstados = estados.size();nestado < numEstados&&apontamPara<2;nestado++)
+                    {
+                        for(int ntrans = 0,numTrans = estados[nestado].transicoes.size();ntrans<numTrans&&apontamPara<2;ntrans++)
+                            if(estados[nestado].transicoes[ntrans].dest == estados[src].transicoes[i].dest)apontamPara++;
+
+                        if(nestado+1 == estados[src].transicoes[i].dest)nestado++;
+                    }
+
+                    if(apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 2)
+                    {
+                        if(estados[estados[src].transicoes[i].dest].transicoes[0].dest == estados[src].transicoes[i].dest||estados[estados[src].transicoes[i].dest].transicoes[1].dest == estados[src].transicoes[i].dest)
+                        {
+                            if(estados[estados[src].transicoes[i].dest].transicoes[0].dest == estados[src].transicoes[i].dest)
+                            {
+                                regExp02 = estados[estados[src].transicoes[i].dest].transicoes[0].regExp;
+                                regExp03 = estados[estados[src].transicoes[i].dest].transicoes[1].regExp;
+                                estadoApontaPara = estados[estados[src].transicoes[i].dest].transicoes[1].dest;
+                            }
+                            else 
+                            {
+                                regExp02 = estados[estados[src].transicoes[i].dest].transicoes[1].regExp;
+                                regExp03 = estados[estados[src].transicoes[i].dest].transicoes[0].regExp;
+                                estadoApontaPara = estados[estados[src].transicoes[i].dest].transicoes[0].dest;
+                            }
+                            regExp01 = estados[src].transicoes[i].regExp;
+                            fechaRegularExpression(regExp01);
+                            fechaRegularExpression(regExp02);
+                            fechaRegularExpression(regExp03);
+                            if(regExp01 == "&")regExp01 = "";
+                            if(regExp03 == "&")regExp03 = "";
+                            
+                            //fecha o regExp02
+                            parentesesEsq = 0;
+                            if(regExp02[0] == '(')parentesesEsq++;
+                            for(int posString = 1,sizeStr = regExp02.size()-1;posString<sizeStr&&parentesesEsq>0;posString++)
+                                if(regExp02[posString] == '(')parentesesEsq++;
+                                else if(regExp02[posString] == ')')parentesesEsq--;
+                            if(parentesesEsq == 0&&regExp02.size()>1)
+                            {
+                                regExp02.insert(0, "(");
+                                regExp02.append(")");
+                            }
+                            parentesesEsq = 0;
+                            regExp02.append("*");
+                            
+                            estadoParaEliminar = estados[src].transicoes[i].dest;
+                            
+                            //o estado intermediario sera eliminado
+                            estados[src].transicoes[i].dest = estadoApontaPara;
+                            estados[src].transicoes[i].regExp = regExp01;
+                            estados[src].transicoes[i].regExp.append(regExp02);
+                            estados[src].transicoes[i].regExp.append(regExp03);
+                            changed = true;
+                            eliminaEstado(estadoParaEliminar);
+                            printGraphInTXT(); 
+
+                        }
+                    }
+                    else if(apontamPara<2&&estados[estados[src].transicoes[i].dest].transicoes.size() == 1)
+                    {
+                        regExp01 = estados[src].transicoes[i].regExp;
+
+                        regExp02 = estados[estados[src].transicoes[i].dest].transicoes[0].regExp;
+
+                        
+                        if(regExp01 == "&")regExp01 = "";
+                        else if(regExp02 == "&")regExp02 = "";
+                        
+                        if(regExp01.size()>0&&regExp02.size()>0)
+                        {
+                            fechaRegularExpression(regExp01);
+                            fechaRegularExpression(regExp02);
+                        }
+                        
+                        //if(regExp01 == "&")regExp01 = "";
+                        //if(regExp02 == "&")regExp02 = "";
+                        //o estado intermediario sera eliminado
+                        
+                        estadoParaEliminar = estados[src].transicoes[i].dest;
+                        estados[src].transicoes[i].dest = estados[estados[src].transicoes[i].dest].transicoes[0].dest;
+                        estados[src].transicoes[i].regExp = regExp01;
+                        estados[src].transicoes[i].regExp.append(regExp02);
+                        changed = true;
+                        eliminaEstado(estadoParaEliminar);
+                        printGraphInTXT(); 
+
+                    }
+                }
+                if(!changed&&estados[estados[src].transicoes[i].dest].transicoes.size()>0&&estados[src].transicoes[i].dest!=src)
+                {
+                    changed = passaPorAutomatoRegExp(estados[src].transicoes[i].dest);
+                }
+
+            }
+            return changed;
+        }
 
         // verificar se uma transição já existe
         bool existsArc(struct transicao trans){
@@ -533,6 +775,23 @@ int main(){
             std::cout << " valida\n\n///////////////////////////\n\n";
         }
     }
+    
+    std::cout << "\n\n\nQuetao04\n" ;
+    automatos.resize(5);
+    
+    automatos[4].createGraph("(a+b)*bb(b+a)*", 4); 
+    automatos[4].estados[0].transicoes.push_back({0,0,"a"});
+    
+    automatos[4].estados[1].transicoes.push_back({1,1,"b"});
+    automatos[4].estados[1].transicoes.push_back({1,1,"a"});
+    for(int j = 0,m = automatos.size(); j<m; j++)
+    {
+        std::cout << "automato["<< j <<"].regularExp = " << automatos[j].geraRegExp() << std::endl;
+        
+    }
+    std::cout << "\n\nFim da Quetao04\n////////////////////////////////////////\n\n" ;
+
+    
 
     std::cout << "Finalizado" << std::endl;
     std::cout << std::endl;
