@@ -124,18 +124,23 @@ class Graph{
         
         // método genérico para remover as transições epsilon
         void removeEpsilonTrans (int questNumber=0){
-            computaFechos();
-            addArcoReduntanteI();
-            addArcoReduntanteII();
-            setValidState();
-            removeEpsilon(); 
-
             // gera arquivo de saída
             std::string fileName = "remocaoEpsilon";
             fileName.append(std::to_string(questNumber));
             fileName.append(".txt");
             myFile.open(fileName); 
+            etapa=0;
+            computaFechos();
             printGraphInTXT();
+            addArcoReduntanteI();
+            printGraphInTXT();
+            addArcoReduntanteII();
+            printGraphInTXT();
+            setValidState();
+            printGraphInTXT();
+            removeEpsilon(); 
+            printGraphInTXT();
+
             //fecha o arquivo
             myFile.close();
 
@@ -243,6 +248,7 @@ class Graph{
             // percorrer o autômato:            
             for (int i=0;i<estados.size();i++){   // para cada estado
                 for (int j=0;j<estados[i].transicoes.size();j++){   // para cada transição de um estado   
+                    int dest = estados[i].transicoes[j].dest;
                     if (estados[i].transicoes[j].regExp=="&"){
                         estados[i].transicoes.erase(estados[i].transicoes.begin()+j);
                     }
@@ -268,7 +274,7 @@ class Graph{
             //verifica as transições para passar pela cadeia
             for(int i = 0,n = estados[estadoAtual].transicoes.size(); i < n; i++)
             {
-                if(estados[estadoAtual].transicoes[i].regExp[0] == '&')//passará sem, se mover na cadeia
+                if(estados[estadoAtual].transicoes[i].regExp == "&")//passará sem, se mover na cadeia
                     passaPorAutomato(possiveisEstados, cadeia, estados[estadoAtual].transicoes[i].dest, posCadeia);
                 else if(posCadeia < cadeia.size()&&estados[estadoAtual].transicoes[i].regExp[0] ==  cadeia[posCadeia])// passa pela cadeia
                     passaPorAutomato(possiveisEstados, cadeia, estados[estadoAtual].transicoes[i].dest, posCadeia+1);
