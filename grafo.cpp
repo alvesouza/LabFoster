@@ -758,11 +758,12 @@ int main(){
     std::vector<std::string> cadeias {"ab", "abb", "bba", "abba"}; 
     //std::vector<Graph> automatos;
     automatos.resize(4);
+    std::cout << "\n\n\nQuetao01\n" ;
     automatos[0].createGraph("(a+b)*bb(b+a)*", 0);
     automatos[1].createGraph("(a(b+c))*", 1);
     automatos[2].createGraph("a*b+b*a", 2);
     automatos[3].createGraph("a*b*c*", 3);
-
+    std::cout << "\n\n\nQuetao02\n" ;
     for(int j = 0,m = automatos.size(); j<m; j++)
     {
         std::cout << "automato["<< j <<"].regularExp = " << automatos[j].regularExp << std::endl;
@@ -776,9 +777,18 @@ int main(){
         }
     }
     
+    std::cout << "Iniciando as remocoes dos arcos epsilon..." << std::endl;
+    for (int i=0;i<automatos.size();i++){
+        automatos[i].removeEpsilonTrans(i);
+    }
+    std::cout << "Arcos epsilon removidos!" << std::endl;
+
     std::cout << "\n\n\nQuetao04\n" ;
     automatos.resize(5);
-    
+    automatos[0].createGraph("(a+b)*bb(b+a)*", 0);
+    automatos[1].createGraph("(a(b+c))*", 1);
+    automatos[2].createGraph("a*b+b*a", 2);
+    automatos[3].createGraph("a*b*c*", 3);
     automatos[4].createGraph("(a+b)*bb(b+a)*", 4); 
     automatos[4].estados[0].transicoes.push_back({0,0,"a"});
     
@@ -795,12 +805,6 @@ int main(){
 
     std::cout << "Finalizado" << std::endl;
     std::cout << std::endl;
-    std::cout << "Iniciando as remocoes dos arcos epsilon..." << std::endl;
-    for (int i=0;i<automatos.size();i++){
-        automatos[i].removeEpsilonTrans(i);
-    }
-    std::cout << "Arcos epsilon removidos!" << std::endl;
-
 /*     automatos.resize(5); // caso simples de teste
     automatos[4].estados.resize(3);
     // estado 0
