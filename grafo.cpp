@@ -123,7 +123,7 @@ class Graph{
         }
         
         // método genérico para remover as transições epsilon
-        void removeEpsilonTrans (int questNumber=4){
+        void removeEpsilonTrans (int questNumber=0){
             computaFechos();
             addArcoReduntanteI();
             addArcoReduntanteII();
@@ -131,7 +131,7 @@ class Graph{
             removeEpsilon(); 
 
             // gera arquivo de saída
-            std::string fileName = "expressaoRegular";
+            std::string fileName = "remocaoEpsilon";
             fileName.append(std::to_string(questNumber));
             fileName.append(".txt");
             myFile.open(fileName); 
@@ -540,7 +540,7 @@ int main(){
     std::cout << std::endl;
     std::cout << "Iniciando as remocoes dos arcos epsilon..." << std::endl;
     for (int i=0;i<automatos.size();i++){
-        automatos[i].removeEpsilonTrans(i+4);
+        automatos[i].removeEpsilonTrans(i);
     }
     std::cout << "Arcos epsilon removidos!" << std::endl;
 
