@@ -16,6 +16,7 @@ class Graph{
     public:
         std::vector<estado> estados;
         std::string regularExp;
+        std::vector<std::vector<int>> fecho;
         /*Graph(std::string regExp,int questNumber)
         {
             estados.resize(0);
@@ -120,6 +121,143 @@ class Graph{
             return valida;
 
         }
+        
+        // método genérico para remover as transições epsilon
+        void removeEpsilonTrans (int questNumber=4){
+            computaFechos();
+            addArcoReduntanteI();
+            addArcoReduntanteII();
+            setValidState();
+            removeEpsilon(); 
+
+            // gera arquivo de saída
+            std::string fileName = "expressaoRegular";
+            fileName.append(std::to_string(questNumber));
+            fileName.append(".txt");
+            myFile.open(fileName); 
+            printGraphInTXT();
+            //fecha o arquivo
+            myFile.close();
+
+        }
+
+        // Métodos para as remoções das E-trnasições (pode resultar em múltiplos estados finais)
+        // I-computar o fecho de cada estado
+        void computaFechos(){
+            std::cout << "I - Computar o transicoes epsilon de cada estado" << std::endl;
+            fecho.resize(estados.size());
+            // primeiro passo: todo estado está no seu próprio fecho
+            for (int i=0;i<fecho.size();i++){
+                fecho[i].push_back(i);
+            }
+            for (int i=0;i<fecho.size();i++){   // para cada estado
+                for (int j=0;j<estados[i].transicoes.size();j++){   // para cada transição de um estado
+                    if (estados[i].transicoes[j].regExp=="&"){
+                        int dest = estados[i].transicoes[j].dest;
+                        fecho[i].insert(fecho[i].end(),fecho[dest].begin(),fecho[dest].end());
+                    }
+                }
+            }
+
+            for (int i=0;i<fecho.size();i++){   // percorre cada vetor de fecho e subsitui cada elemento diferente pelo seu fecho
+                std::vector<int> aux;
+                for (int j=0;j<fecho[i].size();j++){
+                    if (fecho[i][j]!=i){
+                        int outro = fecho[i][j];
+                        aux.insert(aux.end(),fecho[outro].begin(),fecho[outro].end());
+                    }
+                    else aux.push_back(i);
+                }
+                fecho[i]=aux;
+                aux.clear();
+            }
+            // só printa pra ver se tá ok
+            for (int i=0;i<fecho.size();i++){
+                std::cout << "fecho[" << i << "] = ";
+                for (int j=0;j<fecho[i].size();j++){
+                    std::cout << fecho[i][j] << " ";
+                }
+                std::cout << std::endl;
+            }
+        }
+
+        // II- Se Y pertence ao fecho de X, todo arco A -> X gera um arco de A -> Y 
+        // basicamente vamos adicionar arcos redundantes
+        void addArcoReduntanteI (){
+            // percorrer o autômato:            
+            for (int i=0;i<estados.size();i++){   // para cada estado
+                int counter=0; // conta quantos arcos redundantes por estado foram adicionados => evita loop infinito
+                for (int j=0;j<estados[i].transicoes.size()-counter;j++){   // para cada transição de um estado
+                    int src = estados[i].transicoes[j].src;
+                    int dest = estados[i].transicoes[j].dest;
+                    std::string exp;
+                    for (auto t:estados[i].transicoes){
+                        if (t.dest==i)
+                            exp=t.regExp;
+                    }
+                    for (int k=0;k<fecho[dest].size();k++){
+                        // adiciona transição redundante
+                        if (fecho[dest][k]!=dest){
+                            struct transicao trans;
+                            trans.src=src; trans.dest=fecho[dest][k]; trans.regExp=exp;
+                            if (!existsArc(trans)){ //se ainda não existe o arco, add
+                                estados[i].transicoes.push_back(trans);
+                                counter++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    
+        // III- Se Y pertence ao fecho de X, todo arco Y -> A gera um arco de X -> A 
+        // basicamente vamos adicionar arcoes redundantes para outro caso
+        void addArcoReduntanteII (){
+            // percorrer o autômato:            
+            for (int i=0;i<estados.size();i++){   // para cada estado
+                for (int k=0;k<fecho[i].size();k++){
+                    for (int j=0;j<estados[fecho[i][k]].transicoes.size();j++){
+                        int dest = estados[fecho[i][k]].transicoes[j].dest;
+                        std::string exp;
+                        for (auto t:estados[dest].transicoes){
+                            if (t.dest==dest)
+                                exp=t.regExp;
+                        }
+                        // adiciona o arco
+                        struct transicao trans;
+                        trans.src = i;
+                        trans.dest = dest;
+                        trans.regExp = exp;
+                        if (!existsArc(trans))
+                            estados[i].transicoes.push_back(trans);
+                    }
+                }
+            }
+        }
+
+        // IV- Se Y pertence ao fecho de X e Y for final (válido), então X também será válido (porque consegue-se ir X->Y com transição epsilon)
+        // basicamente consertar a validade dos estados (nós)
+        void setValidState (){
+            // percorrer o autômato:            
+            for (int i=0;i<estados.size();i++){   // para cada estado
+                for (int k=0;k<fecho[i].size();k++){
+                    if (estados[fecho[i][k]].valida)
+                        estados[i].valida=true;
+                }
+            }
+        }
+
+        void removeEpsilon(){
+            // percorrer o autômato:            
+            for (int i=0;i<estados.size();i++){   // para cada estado
+                for (int j=0;j<estados[i].transicoes.size();j++){   // para cada transição de um estado   
+                    if (estados[i].transicoes[j].regExp=="&"){
+                        estados[i].transicoes.erase(estados[i].transicoes.begin()+j);
+                    }
+                }
+            }
+        }
+
 
     private:
         std::ofstream myFile;
@@ -357,6 +495,20 @@ class Graph{
             return changed;
         }
 
+        // verificar se uma transição já existe
+        bool existsArc(struct transicao trans){
+            for (int i=0;i<estados.size();i++){
+                for (int j=0;j<estados[i].transicoes.size();j++){
+                    struct transicao tmp;
+                    if (trans.src == estados[i].transicoes[j].src
+                        && trans.dest == estados[i].transicoes[j].dest
+                        && trans.regExp == estados[i].transicoes[j].regExp)
+                        return true;
+                }
+            }
+            return false;
+        }
+
 };
 
 int main(){
@@ -385,6 +537,36 @@ int main(){
     }
 
     std::cout << "Finalizado" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Iniciando as remocoes dos arcos epsilon..." << std::endl;
+    for (int i=0;i<automatos.size();i++){
+        automatos[i].removeEpsilonTrans(i+4);
+    }
+    std::cout << "Arcos epsilon removidos!" << std::endl;
+
+/*     automatos.resize(5); // caso simples de teste
+    automatos[4].estados.resize(3);
+    // estado 0
+    automatos[4].estados[0].valida = false;
+    struct transicao trans;
+    trans.src=0; trans.dest=0; trans.regExp="0";
+    automatos[4].estados[0].transicoes.push_back(trans);
+    trans.src=0; trans.dest=1; trans.regExp="&";
+    automatos[4].estados[0].transicoes.push_back(trans);
+    // estado 1
+    automatos[4].estados[1].valida = false;
+    trans.src=1; trans.dest=1; trans.regExp="1";
+    automatos[4].estados[1].transicoes.push_back(trans);
+    trans.src=1; trans.dest=2; trans.regExp="&";
+    automatos[4].estados[1].transicoes.push_back(trans);
+    // estado 2
+    automatos[4].estados[2].valida = true;
+    trans.src=2; trans.dest=2; trans.regExp="2";
+    automatos[4].estados[2].transicoes.push_back(trans);
+
+    // removeEpsilonTransitions
+    automatos[4].removeEpsilonTrans();  */
+
     std::cin.get();
     return 0;
 }
