@@ -190,17 +190,13 @@ class Graph{
                 for (int j=0;j<estados[i].transicoes.size()-counter;j++){   // para cada transição de um estado
                     int src = estados[i].transicoes[j].src;
                     int dest = estados[i].transicoes[j].dest;
-                    std::string exp;
-                    for (auto t:estados[i].transicoes){
-                        if (t.dest==i)
-                            exp=t.regExp;
-                    }
+                    std::string exp = estados[i].transicoes[j].regExp;
                     for (int k=0;k<fecho[dest].size();k++){
                         // adiciona transição redundante
                         if (fecho[dest][k]!=dest){
                             struct transicao trans;
                             trans.src=src; trans.dest=fecho[dest][k]; trans.regExp=exp;
-                            if (!existsArc(trans)){ //se ainda não existe o arco, add
+                            if (!existsArc(trans) && exp!="&"){ //se ainda não existe o arco, add
                                 estados[i].transicoes.push_back(trans);
                                 counter++;
                             }
@@ -218,17 +214,13 @@ class Graph{
                 for (int k=0;k<fecho[i].size();k++){
                     for (int j=0;j<estados[fecho[i][k]].transicoes.size();j++){
                         int dest = estados[fecho[i][k]].transicoes[j].dest;
-                        std::string exp;
-                        for (auto t:estados[dest].transicoes){
-                            if (t.dest==dest)
-                                exp=t.regExp;
-                        }
+                        std::string exp = estados[fecho[i][k]].transicoes[j].regExp;
                         // adiciona o arco
                         struct transicao trans;
                         trans.src = i;
                         trans.dest = dest;
                         trans.regExp = exp;
-                        if (!existsArc(trans))
+                        if (!existsArc(trans) && exp!="&")
                             estados[i].transicoes.push_back(trans);
                     }
                 }
